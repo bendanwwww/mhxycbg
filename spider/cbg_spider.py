@@ -186,8 +186,6 @@ s = equip_spider()
 # s.start([6], 10000000000000000000.0, 0, 160)
 s.start([17, 20], 300.0, 0, 130)
 
-
-
 # proxy_host, proxy_port = s.get_ip()
 # proxy_meta = "http://%(host)s:%(port)s" % {
 #     "host" : proxy_host,
