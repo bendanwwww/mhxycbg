@@ -6,7 +6,6 @@ import threading
 import time
 from DBUtils.PooledDB import PooledDB
 
-
 class equip_spider(object):
     # 加载js
     with open('/Users/lsy/person/workspace/my_work/mhxycbg/spider/common.js', 'r', encoding='UTF-8') as file:
