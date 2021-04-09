@@ -1,95 +1,34 @@
+import sys
+sys.path.append('/Users/lsy/person/workspace/my_work/mhxycbg')
+
 import json
-import pymysql
-import requests
 import execjs
 import threading
 import time
-from DBUtils.PooledDB import PooledDB
+
+from data.goods_type import goods_type
+from utils.server_util import server_util
+from utils.http_util import http_util
+from utils.db_util import db_util
 
 class equip_spider(object):
+    # 初始化外部类
+    server_util_c = server_util()
+    goods_type_c = goods_type()
+    http_util_c = http_util()
+    db_util_c = db_util()
+
     # 加载js
-    with open('/Users/lsy/person/workspace/my_work/mhxycbg/spider/common.js', 'r', encoding='UTF-8') as file:
+    with open('/Users/lsy/person/workspace/my_work/mhxycbg/data/common.js', 'r', encoding='UTF-8') as file:
         result = file.read()
     common_js_code = execjs.compile(result, cwd=r'/usr/local/lib/node_modules')
 
-    # 加载服务器列表
-    with open('/Users/lsy/person/workspace/my_work/mhxycbg/spider/server.json', 'r', encoding='UTF-8') as file:
-        result = file.read()
-    server_json = json.loads(result)
-    dict_server = {}
-    for id in server_json:
-        for s in server_json[id][1]:
-            dict_server[s[0]] = server_json[id][0][0] + '-' + s[1]
-
-    # 建立数据库连接
-    pool = PooledDB(
-        creator=pymysql,  # 使用链接数据库的模块
-        maxconnections=100,  # 连接池允许的最大连接数，0和None表示不限制连接数
-        mincached=2,  # 初始化时，链接池中至少创建的空闲的链接，0表示不创建
-        maxcached=5,  # 链接池中最多闲置的链接，0和None不限制
-        maxshared=1,  # 链接池中最多共享的链接数量，0和None表示全部共享。PS: 无用，因为pymysql和MySQLdb等模块的 threadsafety都为1，所有值无论设置为多少，_maxcached永远为0，所以永远是所有链接都共享。
-        blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待。True，等待；False，不等待然后报错
-        maxusage=None,  # 一个链接最多被重复使用的次数，None表示无限制
-        setsession=[],  # 开始会话前执行的命令列表。如：["set datestyle to ...", "set time zone ..."]
-        ping=0,
-        # ping MySQL服务端，检查是否服务可用。
-        # 如：0 = None = never,
-        # 1 = default = whenever it is requested,
-        # 2 = when a cursor is created,
-        # 4 = when a query is executed,
-        # 7 = always
-        host='127.0.0.1',
-        port=3306,
-        user='root',
-        password='19951110lsy.',
-        database='mhxy',
-        charset='utf8'
-    )
-
-    # 加载装备类型
-    dict_kind = {
-                    6: "剑", 4: "枪矛", 10: "扇", 14: "刀", 5: "斧钺", 11: "魔棒", 8: "飘带", 
-                    9: "爪刺", 73: "巨剑", 74: "伞", 15: "锤", 7: "双短剑", 72: "灯笼", 13: "环圈", 
-                    53: "弓箭", 12: "鞭", 54: "法杖", 52: "宝珠", 20: "腰带", 17: "头盔", 21: "饰物", 
-                    18: "铠甲", 59: "女衣", 58: "发钗"
-                }
     attribute_names = ["魔力", "体质", "力量", "耐力", "敏捷"]
+    dict_server = server_util_c.get_server_list()
+    dict_kind = goods_type_c.dict_kind
 
     server_ids = dict_server.keys()
     kind_ids = dict_kind.keys()
-
-    def insert_sql(self, sql):
-        conn = self.pool.connection()
-        cur = conn.cursor(pymysql.cursors.DictCursor)
-        cur.execute(sql)
-        conn.commit()
-        cur.close()
-        conn.close()
-    
-    def http_get(self, header, params, url):
-        return requests.get(url, headers=header, params=params, timeout = 10)
-
-    def http_proxy_get(self, header, params, url):
-        proxy_host, proxy_port = self.get_ip()
-        # proxy_meta = "http://%(host)s:%(port)s" % {
-        #     "host" : proxy_host,
-        #     "port" : proxy_port,
-        # }
-        proxy_meta = "socks5://%(host)s:%(port)s" % {
-            "host" : proxy_host,
-            "port" : proxy_port,
-        }
-        proxies = {
-            "http"  : proxy_meta,
-            "https"  : proxy_meta
-        }
-        return requests.get(url, headers=header, params=params, proxies=proxies, timeout = 10)
-
-    def get_ip(self):
-        url = 'http://http.tiqu.letecs.com/getip3?num=1&type=2&pro=&city=0&yys=0&port=2&pack=141532&ts=0&ys=0&cs=0&lb=1&sb=0&pb=4&mr=1&regions=&gm=4'
-        res = requests.get(url)
-        ip_info = json.loads(res.text)
-        return ip_info['data'][0]['ip'], ip_info['data'][0]['port']
 
     def get_info(self, server_id, kind_id, price, level_start, level_end):
         sql_module = "replace into `cbg_equip` (`name`, `type`, `equip_id`, `init_shanghai`, `init_zongshang`, `init_mofa`, `init_fangyu`, `init_linli`, `init_minjie`, `init_qixue`, `addon_moli`, `addon_naili`, `addon_liliang`, `addon_tizhi`, `addon_minjie`, `tj`, `tx`, `tz`, `level`, `price`, `server_id`, `tag_json`, `e_id`, `server_name`, `type_name`, `url`) VALUES ('{0}', {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, '{15}', '{16}', '{17}', {18}, {19}, {20}, '{21}', '{22}', '{23}', '{24}', '{25}');"
@@ -106,8 +45,8 @@ class equip_spider(object):
             header = {
                 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
             }
-            # res = self.http_proxy_get(header, params, url)
-            res = self.http_get(header, params, url)
+            # res = http_util_c.http_proxy_get(header, params, url)
+            res = self.http_util_c.http_get(header, params, url)
             if res.text == '出错了:  没有找到相关的action':
                 break
             res_json = json.loads(res.text)
@@ -152,7 +91,7 @@ class equip_spider(object):
                             tx = tx_tz_split[0].replace('特效：', '')
                 url = "http://xyq.cbg.163.com/equip?s="+ str(server_id) +"&eid="+ data["eid"] +"&view_loc=equip_list|" + data["tag_key"]
                 sql = sql_module.format(data["equip_name"], kind_id, data["equipid"], data["init_damage_raw"], data["init_damage"], data["mofa"], data["init_defense"], data["lingli"], data["minjie"], data["init_hp"], attr_info[0], attr_info[3], attr_info[2], attr_info[1], attr_info[4], tj, tx, tz, data["level"], data["price"], server_id, data["tag_key"], data["eid"], self.dict_server[server_id], self.dict_kind[kind_id], url)
-                self.insert_sql(sql)
+                self.db_util_c.execute_sql(sql)
     
     def start(self, kind_ids, price, level_start, level_end):
         thread_list = []
