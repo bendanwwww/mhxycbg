@@ -26,7 +26,6 @@ class stone_spider(object):
     }
 
     def get_info(self, server_id, stone_type, level):
-        url = "https://xyq.cbg.163.com/cgi-bin/recommend.py"
         params = {
                 'act': 'recommd_by_role',
                 'server_id': server_id,
@@ -37,14 +36,7 @@ class stone_spider(object):
                 'query_order': 'price ASC',
                 'count': 1
         }
-        header = {
-            'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
-        }
-        res = self.http_util_c.http_get(header, params, url)
-        if res.text == '出错了:  没有找到相关的action':
-            return
-        res_json = json.loads(res.text)
-        res_data = res_json["equips"]
+        res_data = self.http_util_c.get_cbg_info_proxy(params, 5)
         if len(res_data) > 0:
             return res_data[0]['price']
 

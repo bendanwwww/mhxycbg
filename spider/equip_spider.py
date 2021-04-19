@@ -32,7 +32,6 @@ class equip_spider(object):
 
     def get_info(self, server_id, kind_id, price, level_start, level_end):
         sql_module = "replace into `cbg_equip` (`name`, `type`, `equip_id`, `init_shanghai`, `init_zongshang`, `init_mofa`, `init_fangyu`, `init_linli`, `init_minjie`, `init_qixue`, `addon_moli`, `addon_naili`, `addon_liliang`, `addon_tizhi`, `addon_minjie`, `tj`, `tx`, `tz`, `level`, `price`, `server_id`, `tag_json`, `e_id`, `server_name`, `type_name`, `url`) VALUES ('{0}', {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, '{15}', '{16}', '{17}', {18}, {19}, {20}, '{21}', '{22}', '{23}', '{24}', '{25}');"
-        url = "https://xyq.cbg.163.com/cgi-bin/recommend.py"
         for page in range(0, 100):
             print(self.dict_server[server_id] + " " + self.dict_kind[kind_id] + " " + str(page))
             params = {
@@ -42,16 +41,9 @@ class equip_spider(object):
                 'kindid':kind_id,
                 'count':100
             }
-            header = {
-                'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
-            }
-            # res = http_util_c.http_proxy_get(header, params, url)
-            res = self.http_util_c.http_get(header, params, url)
-            if res.text == '出错了:  没有找到相关的action':
-                break
-            res_json = json.loads(res.text)
-            res_data = res_json["equips"]
+            res_data = self.http_util_c.get_cbg_info_proxy(params, 5)
             if len(res_data) == 0:
+                print("数据为空")
                 break
             for data in res_data:
                 if float(data["price"]) > price:
@@ -100,8 +92,8 @@ class equip_spider(object):
                 c_thread = cbg_thread(self.dict_server[s], s, kind_id, price, level_start, level_end)
                 c_thread.start()
                 thread_list.append(c_thread)
-                time.sleep(2)
-                if len(thread_list) >= 2:
+                # time.sleep(1)
+                if len(thread_list) >= 1:
                     while thread_list:
                         thread_list.pop().join()
 
@@ -123,7 +115,7 @@ class cbg_thread(threading.Thread):
 
 s = equip_spider()
 # s.start([6], 10000000000000000000.0, 0, 160)
-s.start([17, 20], 300.0, 0, 130)
+s.start([18], 300.0, 130, 130)
 
 # proxy_host, proxy_port = s.get_ip()
 # proxy_meta = "http://%(host)s:%(port)s" % {
