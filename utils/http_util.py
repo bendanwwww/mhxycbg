@@ -17,6 +17,7 @@ class http_util(object):
             del os.environ["https_proxy"]
         url = 'http://http.tiqu.letecs.com/getip3?num=1&type=1&pro=&city=0&yys=0&port=11&pack=141532&ts=0&ys=0&cs=0&lb=1&sb=0&pb=4&mr=2&regions=&gm=4'
         proxy_url = self.http_get(None, None, url).text
+        print(str("http://" + proxy_url))
         os.environ["http_proxy"] = str("http://" + proxy_url)
         os.environ["https_proxy"] = str("https://" + proxy_url)
 
@@ -38,3 +39,17 @@ class http_util(object):
             res_json = json.loads(res.text)
             num += 1
         return res_json["equips"]
+
+s = http_util()
+# s.set_proxy()
+params = {
+                'act': 'recommd_by_role',
+                'server_id': 79,
+                'page': 1,
+                's_type': 4244,
+                'equip_level': 7,
+                'search_type': 'search_stone',
+                'query_order': 'price ASC',
+                'count': 1
+        }
+s.get_cbg_info_proxy(params, 5)

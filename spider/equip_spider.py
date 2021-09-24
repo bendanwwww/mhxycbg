@@ -92,8 +92,8 @@ class equip_spider(object):
                 c_thread = cbg_thread(self.dict_server[s], s, kind_id, price, level_start, level_end)
                 c_thread.start()
                 thread_list.append(c_thread)
-                # time.sleep(1)
-                if len(thread_list) >= 1:
+                time.sleep(5)
+                if len(thread_list) >= 2:
                     while thread_list:
                         thread_list.pop().join()
 
@@ -115,7 +115,7 @@ class cbg_thread(threading.Thread):
 
 s = equip_spider()
 # s.start([6], 10000000000000000000.0, 0, 160)
-s.start([18], 300.0, 130, 130)
+s.start([6, 10], 300.0, 120, 120)
 
 # proxy_host, proxy_port = s.get_ip()
 # proxy_meta = "http://%(host)s:%(port)s" % {
