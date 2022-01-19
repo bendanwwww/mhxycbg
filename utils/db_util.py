@@ -23,7 +23,7 @@ class db_util(object):
         host='127.0.0.1',
         port=3306,
         user='root',
-        password='19951110lsy.',
+        password='',
         database='mhxy',
         charset='utf8'
     )
